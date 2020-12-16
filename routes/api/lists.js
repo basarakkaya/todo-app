@@ -36,7 +36,7 @@ router.post(
     const errors = validationResult(req);
 
     if (!errors.isEmpty()) {
-      res.status(400).json({ errors: errors.array() });
+      return res.status(400).json({ errors: errors.array() });
     }
 
     try {
@@ -76,7 +76,7 @@ router.put('/desc/:list_id', auth, async (req, res) => {
     const list = await List.findById(req.params.list_id);
 
     if (!list) {
-      return res.status(404).json({ errors: [{ msg: 'List not found ' }] });
+      return res.status(404).json({ errors: [{ msg: 'List not found' }] });
     }
 
     if (list.users.indexOf(req.user.id) < 0) {
@@ -97,6 +97,36 @@ router.put('/desc/:list_id', auth, async (req, res) => {
 });
 
 /**
+ * @route       PUT api/lists/rearrange/:list_id
+ * @description Rearranges the list order
+ * @access      Private
+ */
+router.put('/rearrange/:list_id', auth, async (req, res) => {
+  try {
+    const list = await List.findById(req.params.list_id);
+
+    if (!list) {
+      return res.status(404).json({ errors: [{ msg: 'List not found ' }] });
+    }
+
+    if (list.users.indexOf(req.user.id) < 0) {
+      return res.status(401).json({
+        errors: [{ msg: 'User is not authorized to perform this action' }],
+      });
+    }
+
+    list.items = req.body.items;
+
+    await list.save();
+
+    res.json(list);
+  } catch (error) {
+    logger.error(error.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+/**
  * @route       DELETE api/lists/:list_id
  * @description Delete a list with id of list_id
  * @access      Private
@@ -104,6 +134,10 @@ router.put('/desc/:list_id', auth, async (req, res) => {
 router.delete('/:list_id', auth, async (req, res) => {
   try {
     const list = await List.findById(req.params.list_id);
+
+    if (!list) {
+      return res.status(404).json({ errors: [{ msg: 'List not found' }] });
+    }
 
     if (list.users.indexOf(req.user.id) < 0) {
       return res.status(401).json({
@@ -138,6 +172,10 @@ router.post(
 
       const list = await List.findById(req.params.list_id);
 
+      if (!list) {
+        return res.status(404).json({ errors: [{ msg: 'List not found' }] });
+      }
+
       if (list.users.indexOf(req.user.id) < 0) {
         return res.status(401).json({
           errors: [{ msg: 'User is not authorized to perform this action' }],
@@ -150,7 +188,6 @@ router.post(
         text,
         completedDate,
         dueDate,
-        indexInList: list.items.length,
       };
 
       list.items.unshift(newItem);
@@ -166,13 +203,84 @@ router.post(
 );
 
 /**
- * @route       PUT api/lists/item/:list_id/:item_id
- * @description Update a to-do item of item_id, of list of list_id
+ * @route       PUT api/lists/item/text/:list_id/:item_id
+ * @description Update text of a to-do item of item_id, of list of list_id
  * @access      Private
  */
-router.put('/item/:list_id/:item_id', auth, async (req, res) => {
+router.put(
+  '/item/text/:list_id/:item_id',
+  [auth, check('text', 'Please include to-do text').not().isEmpty()],
+  async (req, res) => {
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    try {
+      const list = await List.findById(req.params.list_id);
+
+      if (!list) {
+        return res.status(404).json({ errors: [{ msg: 'List not found ' }] });
+      }
+
+      const item = list.items.filter((item) => item.id === req.params.item_id);
+
+      if (item.length === 0) {
+        return res.status(404).json({ errors: [{ msg: 'Item not found' }] });
+      }
+
+      if (list.users.indexOf(req.user.id) < 0) {
+        return res.status(401).json({
+          errors: [{ msg: 'User is not authorized to perform this action' }],
+        });
+      }
+
+      const newList = await List.findOneAndUpdate(
+        { _id: req.params.list_id },
+        {
+          $set: {
+            'items.$[elem].text': req.body.text,
+          },
+        },
+        {
+          arrayFilters: [{ 'elem._id': { $eq: req.params.item_id } }],
+          new: true,
+        }
+      );
+
+      res.json(newList);
+    } catch (error) {
+      logger.error(error.message);
+      res.status(500).send('Server Error');
+    }
+  }
+);
+
+/**
+ * @route       PUT api/lists/item/complete/:list_id/:item_id
+ * @description Update a to-do item of item_id, of list of list_id as completed on now's date
+ * @access      Private
+ */
+router.put('/item/complete/:list_id/:item_id', auth, async (req, res) => {
   try {
     const list = await List.findById(req.params.list_id);
+
+    if (!list) {
+      return res.status(404).json({ errors: [{ msg: 'List not found ' }] });
+    }
+
+    const item = list.items.filter((item) => item.id === req.params.item_id);
+
+    if (item.length === 0) {
+      return res.status(404).json({ errors: [{ msg: 'Item not found' }] });
+    }
+
+    if (item[0].completedDate) {
+      return res
+        .status(400)
+        .json({ errors: [{ msg: 'Item has already been completed' }] });
+    }
 
     if (list.users.indexOf(req.user.id) < 0) {
       return res.status(401).json({
@@ -184,19 +292,165 @@ router.put('/item/:list_id/:item_id', auth, async (req, res) => {
       { _id: req.params.list_id },
       {
         $set: {
-          ...(req.body.text ? { 'items.$[elem].text': req.body.text } : {}),
-          ...(req.body.indexInList
-            ? { 'items.$[elem].indexInList': req.body.indexInList }
-            : {}),
-          ...(req.body.completedDate
-            ? { 'items.$[elem].completedDate': req.body.completedDate }
-            : {}),
-          ...(req.body.dueDate
-            ? { 'items.$[elem].dueDate': req.body.dueDate }
-            : {}),
+          'items.$[elem].completedDate': Date.now(),
         },
       },
-      { arrayFilters: [{ 'elem._id': { $eq: req.params.item_id } }] }
+      { arrayFilters: [{ 'elem._id': { $eq: req.params.item_id } }], new: true }
+    );
+
+    res.json(newList);
+  } catch (error) {
+    logger.error(error.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+/**
+ * @route       PUT api/lists/item/incomplete/:list_id/:item_id
+ * @description Update a to-do item of item_id, of list of list_id as incomplete
+ * @access      Private
+ */
+router.put('/item/incomplete/:list_id/:item_id', auth, async (req, res) => {
+  try {
+    const list = await List.findById(req.params.list_id);
+
+    if (!list) {
+      return res.status(404).json({ errors: [{ msg: 'List not found ' }] });
+    }
+
+    const item = list.items.filter((item) => item.id === req.params.item_id);
+
+    if (item.length === 0) {
+      return res.status(404).json({ errors: [{ msg: 'Item not found' }] });
+    }
+
+    if (!item[0].completedDate) {
+      return res
+        .status(400)
+        .json({ errors: [{ msg: 'Item has not been completed' }] });
+    }
+
+    if (list.users.indexOf(req.user.id) < 0) {
+      return res.status(401).json({
+        errors: [{ msg: 'User is not authorized to perform this action' }],
+      });
+    }
+
+    const newList = await List.findOneAndUpdate(
+      { _id: req.params.list_id },
+      {
+        $set: {
+          'items.$[elem].completedDate': null,
+        },
+      },
+      { arrayFilters: [{ 'elem._id': { $eq: req.params.item_id } }], new: true }
+    );
+
+    res.json(newList);
+  } catch (error) {
+    logger.error(error.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+/**
+ * @route       PUT api/lists/item/due/:list_id/:item_id
+ * @description Update due date of a to-do item of item_id, of list of list_id
+ * @access      Private
+ */
+router.put(
+  '/item/due/:list_id/:item_id',
+  [
+    auth,
+    check('dueDate', 'Enter a valid due date').not().isEmpty(),
+    check('dueDate', 'Enter a valid due date').isDate(),
+  ],
+  async (req, res) => {
+    try {
+      const errors = validationResult(req);
+
+      if (!errors) {
+        return res.status(400).json({ errors: errors.array() });
+      }
+
+      const list = await List.findById(req.params.list_id);
+
+      if (!list) {
+        return res.status(404).json({ errors: [{ msg: 'List not found ' }] });
+      }
+
+      const item = list.items.filter((item) => item.id === req.params.item_id);
+
+      if (item.length === 0) {
+        return res.status(404).json({ errors: [{ msg: 'Item not found' }] });
+      }
+
+      if (list.users.indexOf(req.user.id) < 0) {
+        return res.status(401).json({
+          errors: [{ msg: 'User is not authorized to perform this action' }],
+        });
+      }
+
+      const newList = await List.findOneAndUpdate(
+        { _id: req.params.list_id },
+        {
+          $set: {
+            'items.$[elem].dueDate': req.body.dueDate,
+          },
+        },
+        {
+          arrayFilters: [{ 'elem._id': { $eq: req.params.item_id } }],
+          new: true,
+        }
+      );
+
+      res.json(newList);
+    } catch (error) {
+      logger.error(error.message);
+      res.status(500).send('Server Error');
+    }
+  }
+);
+
+/**
+ * @route       PUT api/lists/item/undue/:list_id/:item_id
+ * @description Remove due data of a to-do item of item_id, of list of list_id
+ * @access      Private
+ */
+router.put('/item/undue/:list_id/:item_id', auth, async (req, res) => {
+  try {
+    const list = await List.findById(req.params.list_id);
+
+    if (!list) {
+      return res.status(404).json({ errors: [{ msg: 'List not found ' }] });
+    }
+
+    const item = list.items.filter((item) => item.id === req.params.item_id);
+
+    if (item.length === 0) {
+      return res.status(404).json({ errors: [{ msg: 'Item not found' }] });
+    }
+
+    if (!item[0].dueDate) {
+      return res
+        .status(400)
+        .json({ errors: [{ msg: 'Item does not have a due date' }] });
+    }
+
+    if (list.users.indexOf(req.user.id) < 0) {
+      return res.status(401).json({
+        errors: [{ msg: 'User is not authorized to perform this action' }],
+      });
+    }
+
+    const newList = await List.findOneAndUpdate(
+      { _id: req.params.list_id },
+      {
+        $set: {
+          'items.$[elem].dueDate': null,
+        },
+      },
+      { arrayFilters: [{ 'elem._id': { $eq: req.params.item_id } }], new: true }
     );
 
     res.json(newList);

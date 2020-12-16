@@ -21,10 +21,6 @@ const ListSchema = new Schema({
         type: String,
         required: true,
       },
-      indexInList: {
-        type: Number,
-        required: true,
-      },
       completedDate: {
         type: Date,
       },
