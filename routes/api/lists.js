@@ -25,6 +25,32 @@ router.get('/', auth, async (req, res) => {
 });
 
 /**
+ * @route       GET api/lists/:list_id
+ * @description Get a single list of user
+ * @access      Private
+ */
+router.get('/:list_id', auth, async (req, res) => {
+  try {
+    const list = await List.findById(req.params.list_id);
+
+    if (!list) {
+      return res.status(404).json({ errors: [{ msg: 'List not found' }] });
+    }
+
+    if (list.users.indexOf(req.user.id) < 0) {
+      return res.status(401).json({
+        errors: [{ msg: 'User is not authorized to perform this action' }],
+      });
+    }
+
+    res.json(list);
+  } catch (error) {
+    logger.error(error.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+/**
  * @route       POST api/lists
  * @description Create a new list
  * @access      Private
