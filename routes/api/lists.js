@@ -79,6 +79,12 @@ router.put('/desc/:list_id', auth, async (req, res) => {
       return res.status(404).json({ errors: [{ msg: 'List not found ' }] });
     }
 
+    if (list.users.indexOf(req.user.id) < 0) {
+      return res.status(401).json({
+        errors: [{ msg: 'User is not authorized to perform this action' }],
+      });
+    }
+
     list.description = req.body.description || '';
 
     await list.save();
@@ -97,6 +103,14 @@ router.put('/desc/:list_id', auth, async (req, res) => {
  */
 router.delete('/:list_id', auth, async (req, res) => {
   try {
+    const list = await List.findById(req.params.list_id);
+
+    if (list.users.indexOf(req.user.id) < 0) {
+      return res.status(401).json({
+        errors: [{ msg: 'User is not authorized to perform this action' }],
+      });
+    }
+
     await List.findOneAndRemove({ _id: req.params.list_id });
 
     res.json({ msg: 'List deleted' });
@@ -124,6 +138,12 @@ router.post(
 
       const list = await List.findById(req.params.list_id);
 
+      if (list.users.indexOf(req.user.id) < 0) {
+        return res.status(401).json({
+          errors: [{ msg: 'User is not authorized to perform this action' }],
+        });
+      }
+
       const { text, completedDate, dueDate } = req.body;
 
       const newItem = {
@@ -150,27 +170,165 @@ router.post(
  * @description Update a to-do item of item_id, of list of list_id
  * @access      Private
  */
-router.put('/item/:list_id/:item_id', auth, async (req, res) => {});
+router.put('/item/:list_id/:item_id', auth, async (req, res) => {
+  try {
+    const list = await List.findById(req.params.list_id);
+
+    if (list.users.indexOf(req.user.id) < 0) {
+      return res.status(401).json({
+        errors: [{ msg: 'User is not authorized to perform this action' }],
+      });
+    }
+
+    const newList = await List.findOneAndUpdate(
+      { _id: req.params.list_id },
+      {
+        $set: {
+          ...(req.body.text ? { 'items.$[elem].text': req.body.text } : {}),
+          ...(req.body.indexInList
+            ? { 'items.$[elem].indexInList': req.body.indexInList }
+            : {}),
+          ...(req.body.completedDate
+            ? { 'items.$[elem].completedDate': req.body.completedDate }
+            : {}),
+          ...(req.body.dueDate
+            ? { 'items.$[elem].dueDate': req.body.dueDate }
+            : {}),
+        },
+      },
+      { arrayFilters: [{ 'elem._id': { $eq: req.params.item_id } }] }
+    );
+
+    res.json(newList);
+  } catch (error) {
+    logger.error(error.message);
+    res.status(500).send('Server Error');
+  }
+});
 
 /**
  * @route       DELETE api/lists/item/:list_id/:item_id
  * @description Delete a to-do item of item_id, of list of list_id
  * @access      Private
  */
-router.delete('/item/:list_id/:item_id', auth, async (req, res) => {});
+router.delete('/item/:list_id/:item_id', auth, async (req, res) => {
+  try {
+    const list = await List.findById(req.params.list_id);
+
+    if (!list) {
+      return res.status(404).json({ errors: [{ msg: 'List not found' }] });
+    }
+
+    if (list.users.indexOf(req.user.id) < 0) {
+      return res.status(401).json({
+        errors: [{ msg: 'User is not authorized to perform this action' }],
+      });
+    }
+
+    const item = list.items.find((item) => item.id === req.params.item_id);
+
+    if (!item) {
+      return res.status(404).json({ errors: [{ msg: 'Item not found' }] });
+    }
+
+    const removeIndex = list.items
+      .map((item) => item._id)
+      .indexOf(req.params.item_id);
+
+    list.items.splice(removeIndex, 1);
+
+    await list.save();
+
+    res.json(list.items);
+  } catch (error) {
+    logger.error(error.message);
+    res.status(500).send('Server Error');
+  }
+});
 
 /**
  * @route       POST api/lists/users/:list_id
  * @description Adds a user to a list with id of list_id, by user email
  * @access      Private
  */
-router.post('/users/:list_id', auth, async (req, res) => {});
+router.post('/users/:list_id', auth, async (req, res) => {
+  try {
+    const user = await User.findOne({ email: req.body.email });
+
+    if (!user) {
+      return res.status(404).json({ errors: [{ msg: 'User not found' }] });
+    }
+
+    const list = await List.findById(req.params.list_id);
+
+    if (!list) {
+      return res.status(404).json({ errors: [{ msg: 'List not found' }] });
+    }
+
+    if (list.users.indexOf(req.user.id) < 0) {
+      return res.status(401).json({
+        errors: [{ msg: 'User is not authorized to perform this action' }],
+      });
+    }
+
+    list.users.unshift(user);
+
+    await list.save();
+
+    res.json(list);
+  } catch (error) {
+    logger.error(error.message);
+    res.status(500).send('Server Error');
+  }
+});
 
 /**
  * @route       DELETE api/lists/users/:list_id/:user_id
  * @description Remove a user of user_id from a list with id of list_id
  * @access      Private
  */
-router.delete('/users/:list_id/:user_id', auth, async (req, res) => {});
+router.delete('/users/:list_id/:user_id', auth, async (req, res) => {
+  try {
+    const list = await List.findById(req.params.list_id);
+
+    if (!list) {
+      return res.status(404).json({ errors: [{ msg: 'List not found' }] });
+    }
+
+    if (list.users.indexOf(req.user.id) < 0) {
+      return res.status(401).json({
+        errors: [{ msg: 'User is not authorized to perform this action' }],
+      });
+    }
+
+    if (list.users.length === 1) {
+      return res.status(400).json({
+        errors: [
+          {
+            msg:
+              'You cannot remove this user, a list must have at least 1 user',
+          },
+        ],
+      });
+    }
+
+    const removeIndex = list.users.indexOf(req.params.user_id);
+
+    if (removeIndex < 0) {
+      return res
+        .status(404)
+        .json({ errors: [{ msg: 'User not found in list users' }] });
+    }
+
+    list.users.splice(removeIndex, 1);
+
+    await list.save();
+
+    res.json(list);
+  } catch (error) {
+    logger.error(error.message);
+    res.status(500).send('Server Error');
+  }
+});
 
 module.exports = router;
