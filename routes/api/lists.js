@@ -519,7 +519,7 @@ router.delete('/item/:list_id/:item_id', auth, async (req, res) => {
 
     await list.save();
 
-    res.json(list.items);
+    res.json(list);
   } catch (error) {
     logger.error(error.message);
     res.status(500).send('Server Error');
