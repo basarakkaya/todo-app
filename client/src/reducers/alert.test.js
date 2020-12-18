@@ -30,3 +30,7 @@ test('returns an empty array upon calling REMOVE_ALERT', () => {
 
   expect(newState.length).toBe(0);
 });
+
+test('returns default state when no action passed', () => {
+  expect(alertReducer(undefined, {})).toEqual([]);
+});

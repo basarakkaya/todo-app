@@ -180,3 +180,12 @@ describe('updates local storage correctly upon calling', () => {
     expect(window.localStorage.removeItem).toHaveBeenCalledWith('token');
   });
 });
+
+test('returns default state when no action passed', () => {
+  expect(authReducer(undefined, {})).toEqual({
+    token: null,
+    isAuthenticated: null,
+    loading: true,
+    user: null,
+  });
+});
