@@ -208,11 +208,10 @@ router.post(
         });
       }
 
-      const { text, completedDate, dueDate } = req.body;
+      const { text, dueDate } = req.body;
 
       const newItem = {
         text,
-        completedDate,
         dueDate,
       };
 
