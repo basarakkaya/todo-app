@@ -1,10 +1,15 @@
 import React from 'react';
-import PropTypes from 'prop-types';
+import { Link } from 'react-router-dom';
 
-const NotFound = (props) => {
-  return <div></div>;
+const NotFound = () => {
+  return (
+    <div data-test='component-not-found'>
+      <h1 data-test='not-found-error-message'>Page is not found</h1>
+      <Link data-test='not-found-homepage-link' to='/'>
+        Return to homepage
+      </Link>
+    </div>
+  );
 };
-
-NotFound.propTypes = {};
 
 export default NotFound;

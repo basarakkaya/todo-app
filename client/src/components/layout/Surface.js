@@ -1,10 +1,12 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-const Surface = (props) => {
-  return <div></div>;
+const Surface = ({ children }) => {
+  return <div data-test='component-surface'>{children}</div>;
 };
 
-Surface.propTypes = {};
+Surface.propTypes = {
+  children: PropTypes.node,
+};
 
 export default Surface;
