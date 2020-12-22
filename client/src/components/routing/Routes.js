@@ -5,6 +5,7 @@ import PrivateRoute from './PrivateRoute';
 
 import Surface from '../layout/Surface';
 import Alert from '../layout/Alert';
+import NotFound from '../layout/NotFound';
 
 import Register from '../auth/Register';
 import Login from '../auth/Login';
@@ -21,6 +22,7 @@ const Routes = () => {
         <Route exact path='/login' component={Login} />
         <PrivateRoute exact path='/lists' component={Lists} />
         <PrivateRoute exact path='/list/:id' component={List} />
+        <Route component={NotFound} />
       </Switch>
     </Surface>
   );
