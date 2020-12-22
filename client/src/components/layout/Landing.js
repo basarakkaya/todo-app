@@ -1,7 +1,13 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, Redirect } from 'react-router-dom';
+import { connect } from 'react-redux';
+import PropTypes from 'prop-types';
 
-const Landing = () => {
+const Landing = ({ isAuthenticated }) => {
+  if (isAuthenticated) {
+    return <Redirect data-test='landing-redirect' to='/lists' />;
+  }
+
   return (
     <div data-test='component-landing'>
       <h1>Welcome!</h1>
@@ -15,4 +21,10 @@ const Landing = () => {
   );
 };
 
-export default Landing;
+Landing.propTypes = {
+  isAuthenticated: PropTypes.bool,
+};
+
+export default connect(({ auth: { isAuthenticated } }) => ({
+  isAuthenticated,
+}))(Landing);
