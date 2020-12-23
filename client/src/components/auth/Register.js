@@ -18,6 +18,12 @@ export class UnconnectedRegister extends React.Component {
     this.props.register({ name, email, password });
   };
 
+  onChange = (e) => {
+    this.setState({
+      [e.target.name]: e.target.value,
+    });
+  };
+
   render() {
     const { name, email, password } = this.state;
 
@@ -28,24 +34,27 @@ export class UnconnectedRegister extends React.Component {
     return (
       <div data-test='component-register'>
         {this.props.loading && <h6>loading...</h6>}
-        <form>
+        <form onSubmit={this.onRegister}>
           <input
             data-test='register-name'
             type='text'
             value={name}
-            onChange={(e) => this.setState({ name: e.target.value })}
+            name='name'
+            onChange={this.onChange}
           />
           <input
             data-test='register-email'
             type='text'
             value={email}
-            onChange={(e) => this.setState({ email: e.target.value })}
+            name='email'
+            onChange={this.onChange}
           />
           <input
             data-test='register-password'
             type='password'
             value={password}
-            onChange={(e) => this.setState({ password: e.target.value })}
+            name='password'
+            onChange={this.onChange}
           />
           <button
             data-test='register-button'

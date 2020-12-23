@@ -17,6 +17,12 @@ export class UnconnectedLogin extends React.Component {
     this.props.login({ email, password });
   };
 
+  onChange = (e) => {
+    this.setState({
+      [e.target.name]: e.target.value,
+    });
+  };
+
   render() {
     const { email, password } = this.state;
 
@@ -27,18 +33,20 @@ export class UnconnectedLogin extends React.Component {
     return (
       <div data-test='component-login'>
         {this.props.loading && <h6>loading...</h6>}
-        <form>
+        <form onSubmit={this.onLogin}>
           <input
             data-test='login-email'
             type='text'
             value={email}
-            onChange={(e) => this.setState({ email: e.target.value })}
+            name='email'
+            onChange={this.onChange}
           />
           <input
             data-test='login-password'
             type='password'
             value={password}
-            onChange={(e) => this.setState({ password: e.target.value })}
+            name='password'
+            onChange={this.onChange}
           />
           <button data-test='login-button' type='submit' onClick={this.onLogin}>
             Login
