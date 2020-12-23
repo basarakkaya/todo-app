@@ -1,9 +1,9 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
-import { Link } from 'react-router-dom';
 
 import NewList from './NewList';
+import ListItem from './ListItem';
 
 import { getLists } from '../../actions/list';
 
@@ -25,16 +25,11 @@ export const UnconnectedLists = ({
       {loading && <div data-test='lists-loader'>Loading lists...</div>}
       <div data-test='lists-list-container'>
         {lists.length > 0
-          ? lists.map((list) => (
-              <Link
-                data-test='lists-list'
-                key={list._id}
-                to={`/list/${list._id}`}
-              >
-                <p>{list.name}</p>
-                <p>{list.description}</p>
-              </Link>
-            ))
+          ? lists.map((list) => {
+              return (
+                <ListItem data-test='lists-list' key={list._id} list={list} />
+              );
+            })
           : 'You do not have any lists'}
       </div>
     </div>
