@@ -6,8 +6,10 @@ import NewTodo from './NewTodo';
 import TodoItem from './TodoItem';
 
 import { getList } from '../../actions/list';
+import { addTodoItem } from '../../actions/todo';
 
 export const UnconnectedList = ({
+  addTodoItem,
   getList,
   match: {
     params: { id: listId },
@@ -24,8 +26,12 @@ export const UnconnectedList = ({
 
   return (
     <div data-test='component-list'>
-      <NewTodo data-test='list-new-todo' listId={listId} />
-      {loading && <div data-test='list-loader'></div>}
+      <NewTodo
+        data-test='list-new-todo'
+        addTodoItem={addTodoItem}
+        listId={listId}
+      />
+      {loading && <div data-test='list-loader'>Loading...</div>}
       <div data-test='list-todo-container'>
         {list && list.items && list.items.length > 0
           ? list.items.map((item) => (
@@ -38,6 +44,7 @@ export const UnconnectedList = ({
 };
 
 UnconnectedList.propTypes = {
+  addTodoItem: PropTypes.func,
   getList: PropTypes.func,
   match: PropTypes.object,
   loggedIn: PropTypes.bool,
@@ -51,4 +58,6 @@ const mapStateToProps = ({ auth, list: { list, loading } }) => ({
   loading,
 });
 
-export default connect(mapStateToProps, { getList })(UnconnectedList);
+export default connect(mapStateToProps, { addTodoItem, getList })(
+  UnconnectedList
+);

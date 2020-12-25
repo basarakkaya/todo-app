@@ -1,14 +1,17 @@
 import React from 'react';
 import { shallow } from 'enzyme';
 
-import { findByTestAttr, storeFactory } from '../../../test/testUtils';
+import { findByTestAttr } from '../../../test/testUtils';
 
-import NewTodo, { UnconnectedNewTodo } from './NewTodo';
+import NewTodo from './NewTodo';
 
-const setup = (state = {}) => {
-  const store = storeFactory(state);
-  const wrapper = shallow(<NewTodo store={store} />).dive();
-  return wrapper;
+const initialProps = {
+  addTodoItem: () => {},
+  listId: 'test-id',
+};
+
+const setup = (props = initialProps) => {
+  return shallow(<NewTodo {...props} />);
 };
 
 describe('render', () => {
@@ -48,16 +51,13 @@ describe('add todo action call', () => {
   let wrapper;
   let createButton;
 
-  const listId = 'test-id';
   const text = 'test todo';
   const dueDate = Date.now();
 
   beforeEach(() => {
     addTodoMock = jest.fn();
 
-    wrapper = shallow(
-      <UnconnectedNewTodo addTodoItem={addTodoMock} listId={listId} />
-    );
+    wrapper = setup({ ...initialProps, addTodoItem: addTodoMock });
 
     wrapper.setState({
       text,
@@ -82,7 +82,7 @@ describe('add todo action call', () => {
 
     expect(addTodoCallArgs.length).toBe(3);
 
-    expect(addTodoCallArgs[0]).toBe(listId);
+    expect(addTodoCallArgs[0]).toBe(initialProps.listId);
     expect(addTodoCallArgs[1]).toBe(text);
     expect(addTodoCallArgs[2]).toBe(dueDate);
   });
@@ -95,7 +95,7 @@ describe('add todo action call', () => {
 
     expect(addTodoCallArgs.length).toBe(3);
 
-    expect(addTodoCallArgs[0]).toBe(listId);
+    expect(addTodoCallArgs[0]).toBe(initialProps.listId);
     expect(addTodoCallArgs[1]).toBe(text);
     expect(addTodoCallArgs[2]).toBeFalsy();
   });

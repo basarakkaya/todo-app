@@ -1,9 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { connect } from 'react-redux';
 
-import { addTodoItem } from '../../actions/todo';
-export class UnconnectedNewTodo extends React.Component {
+class NewTodo extends React.Component {
   state = {
     text: '',
     dueDate: '',
@@ -59,9 +57,9 @@ export class UnconnectedNewTodo extends React.Component {
   }
 }
 
-UnconnectedNewTodo.propTypes = {
-  addTodoItem: PropTypes.func.isRequired,
+NewTodo.propTypes = {
+  addTodoItem: PropTypes.func,
   listId: PropTypes.string,
 };
 
-export default connect(null, { addTodoItem })(UnconnectedNewTodo);
+export default NewTodo;
