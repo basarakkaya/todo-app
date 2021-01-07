@@ -31,6 +31,9 @@ const ListSchema = new Schema({
         type: Date,
         default: Date.now,
       },
+      order: {
+        type: Number,
+      },
     },
   ],
   date: {

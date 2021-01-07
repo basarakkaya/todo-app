@@ -141,7 +141,16 @@ router.put('/rearrange/:list_id', auth, async (req, res) => {
       });
     }
 
-    list.items = req.body.items;
+    list.items = req.body.items.map(
+      ({ _id, text, completedDate, dueDate, date }, index) => ({
+        _id,
+        text,
+        completedDate,
+        dueDate,
+        date,
+        order: index,
+      })
+    );
 
     await list.save();
 
@@ -216,6 +225,16 @@ router.post(
       };
 
       list.items.unshift(newItem);
+      list.items = list.items.map(
+        ({ _id, text, completedDate, dueDate, date }, index) => ({
+          _id,
+          text,
+          completedDate,
+          dueDate,
+          date,
+          order: index,
+        })
+      );
 
       await list.save();
 
@@ -515,6 +534,16 @@ router.delete('/item/:list_id/:item_id', auth, async (req, res) => {
       .indexOf(req.params.item_id);
 
     list.items.splice(removeIndex, 1);
+    list.items = list.items.map(
+      ({ _id, text, completedDate, dueDate, date }, index) => ({
+        _id,
+        text,
+        completedDate,
+        dueDate,
+        date,
+        order: index,
+      })
+    );
 
     await list.save();
 
