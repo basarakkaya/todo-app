@@ -119,3 +119,7 @@ test('calls get list action on mount', () => {
 
   expect(getListMock.mock.calls.length).toBe(1);
 });
+
+// TODO: Rearrange list
+
+// TODO: Filter list items - completed, incomplete, etc.

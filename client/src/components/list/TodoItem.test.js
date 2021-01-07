@@ -12,6 +12,12 @@ const initialProps = {
     completedDate: '2020-12-21T10:48:35.151+00:00',
     dueDate: '2020-12-21T10:48:35.151+00:00',
   },
+  updateTodoText: () => {},
+  completeTodoItem: () => {},
+  incompleteTodoItem: () => {},
+  setDueTodoItem: () => {},
+  unsetDueTodoItem: () => {},
+  removeTodoItem: () => {},
 };
 
 const setup = (props = {}) => {
@@ -78,3 +84,5 @@ describe('render', () => {
     expect(dueDate.length).toBe(0);
   });
 });
+
+// TODO: To-do item actions - update, complete/incomplete, due/undue, remove

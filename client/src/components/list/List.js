@@ -8,6 +8,13 @@ import TodoItem from './TodoItem';
 import { getList } from '../../actions/list';
 import { addTodoItem } from '../../actions/todo';
 
+// TODO: In order to rearrange the list, below should be done:
+// * create a state for list items
+// * when the list is fetched from remote, fill this state with list items
+// * pass the setter of this state to ReactSortable element as `setList` prop
+// * create a function such as `onRearrange` and pass that to ReactSortable element as `onEnd` prop
+// * call `updateListArrangement` redux action within that `onRearrange` function
+
 export const UnconnectedList = ({
   addTodoItem,
   getList,
